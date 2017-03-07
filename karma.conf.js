@@ -52,6 +52,7 @@ module.exports = function (config) {
       { pattern: 'dist/dev/**/*.css', included: false, watched: true, served: true },
       { pattern: 'node_modules/systemjs/dist/system-polyfills.js', included: false, watched: false }, // PhantomJS2 (and possibly others) might require it
 
+      { pattern: 'node_modules/@ngrx/**/*.js', included: false, watched: false },
       // suppress annoying 404 warnings for resources, images, etc.
       { pattern: 'dist/dev/assets/**/*', watched: false, included: false, served: true },
 
@@ -73,12 +74,22 @@ module.exports = function (config) {
 
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
+    preprocessors: {
+      'dist/dev/**/!(*.spec|*.po|*.e2e-spec|*.module).js': ['coverage']
+    },
 
     // test results reporter to use
     // possible values: 'dots', 'progress'
     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
-    reporters: ['mocha'],
+    reporters: ['mocha', 'coverage', 'junit'],
 
+    // Report as junit so Bamboo can harvest
+    junitReporter: {
+      outputDir: 'reports/', // results will be saved as $outputDir/$browserName.xml
+      outputFile: undefined, // if included, results will be saved as $outputDir/$browserName/$outputFile
+      suite: '', // suite will become the package name attribute in xml testsuite element
+      useBrowserName: true // add browser name to report and classes names
+    },
 
     // web server port
     port: 9876,
@@ -100,6 +111,7 @@ module.exports = function (config) {
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
     browsers: [
+      // 'PhantomJS'
       'Chrome'
     ],
 
@@ -108,6 +120,23 @@ module.exports = function (config) {
       Chrome_travis_ci: {
         base: 'Chrome',
         flags: ['--no-sandbox']
+      }
+    },
+    // Configuration options: https://github.com/karma-runner/karma-coverage/blob/master/docs/configuration.md
+    coverageReporter: {
+      dir: 'coverage/',
+      reporters: [
+        { type: 'text-summary' },
+        { type: 'json', subdir: '.', file: 'coverage-final.json' },
+        { type: 'html' }
+      ],
+      check: {
+        global: {
+          statements: 90,
+          branches: 60,
+          functions: 90,
+          lines: 90
+        }
       }
     },
 
@@ -131,5 +160,9 @@ module.exports = function (config) {
     config.browsers = ['Chrome_travis_ci'];
     config.singleRun = true;
     config.browserNoActivityTimeout = 90000;
+  }
+  //bamboo_buildKey is an arbitrary environment var that should be set within bamboo
+  if (process.env.bamboo_buildKey) {
+    config.browsers = ['PhantomJS'];
   }
 };
