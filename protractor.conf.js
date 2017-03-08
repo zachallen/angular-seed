@@ -1,3 +1,4 @@
+let SpecReporter = require('jasmine-spec-reporter').SpecReporter;
 const config = {
   baseUrl: 'http://localhost:5555/',
 
@@ -18,6 +19,8 @@ const config = {
     isVerbose: false,
     includeStackTrace: false,
     // defaultTimeoutInterval: 400000
+    //Remove protractor dot reporter in favor of jasmine-spec-reporter
+    print: function() {}
   },
 
   directConnect: true,
@@ -26,7 +29,13 @@ const config = {
     browserName: 'chrome'
   },
 
-  onPrepare: function() {
+  onPrepare: function () {
+    jasmine.getEnv().addReporter(new SpecReporter({
+      spec: {
+        displayStacktrace: true
+      }
+    }));
+
     browser.ignoreSynchronization = false;
   },
 
